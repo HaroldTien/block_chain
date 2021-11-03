@@ -130,3 +130,9 @@ class Block_chain:
                     balance+=transaction.amounts
         return balance
     
+
+
+block_chain=Block_chain()
+block_chain.create_genese_block()
+block_chain.mine_block('harold')
+block_chain.mine_block('lin')
