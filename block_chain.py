@@ -1,5 +1,7 @@
+from ctypes import resize
 import hashlib
 import time
+import rsa
 
 class Transaction:
     def __init__(self,sender,receiver,amounts,fee,message):
@@ -129,10 +131,73 @@ class Block_chain:
                 elif transaction.receiver==account:
                     balance+=transaction.amounts
         return balance
+
+    def verify_blockchain(self):
+        previous_hash=''
+        for idx,block in enumerate(self.chain):
+            # print(idx,':',block,'\n')
+            if self.get_hash(block,block.nonce)!= block.hash:
+                print("Error:Hash not matched!")
+                return False
+            elif previous_hash!= block.previous_hash and idx:
+                print('Error:Hash not matched to previous_hash')
+                return False
+        previous_hash=block.hash
+        print('Hash correct!')
+        return True
+
+    def generate_address(self):
+        public,private=rsa.newkeys(512)
+        public_key=public.save_pkcs1()
+        private_key=private.save_pkcs1()
+        return self.get_address_from_public(public_key),private_key
+
+    def get_address_from_public(self,public):
+        address=str(public).replace('\\n','')
+        address=address.replace("b'-----BEGIN RSA PUBLIC KEY-----",'')
+        address=address.replace("-----END RSA PUBLIC KEY-----'",'')
+        address=address.replace(' ','')
+        print('address:',address)
+    
+    def initialize_transaction(self,sender,receiver,amount,fee,message):
+        if self.get_balance(sender)<amount+fee:
+            print('Balance not enough!')
+            return False
+        new_transaction=Transaction(sender,receiver,amount,fee,message)
+        return new_transaction
+
+    def sign_transaction(self,transaction,private_key):
+        private_key_pkcs=rsa.PublicKey.load_pkcs1(private_key)
+        transaction_str=self.get_transactions_string(transaction)
+        signature=rsa.sign(transaction_str.encode('utf-8'),private_key_pkcs,'SHA-1')
+        return signature
+
+
+    def add_transaction(self,transaction,signature):
+        public_key='-----BEGIN RSA PUBLIC KEY-----\n'
+        public_key+=transaction.sender
+        public_key+='\n-----END RSA PUBLIC KEY-----\n'
+        public_key_pkcs=rsa.PublicKey.load_pkcs1(public_key.encode('utf-8'))
+        transaction_str=self.transaction_to_string(transaction)
+        if transaction.fee+transaction.amount>self.get_balance(transaction.sender):
+            print('Balance not enough!')
+            return False
+        try:
+            rsa.verify(transaction_str.encode('utf-8'),signature,public_key_pkcs)
+            print("Authorized successfully!")
+            self.pending_transactions.append(transaction)
+            return True
+        except Exception:
+            print("RSA Verified wrong")
+
+        
+
+if __name__=='__main__':
+    block_chain=Block_chain()
+
     
 
 
-block_chain=Block_chain()
-block_chain.create_genese_block()
-block_chain.mine_block('harold')
-block_chain.mine_block('lin')
+    
+
+

@@ -1,2 +1,5 @@
-arr=[1,2,3,4,5,6,7,8]
-print(arr[-1],':',arr[-2])
+
+a=3
+def test():
+    a=1
+print(a)
