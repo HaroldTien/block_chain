@@ -1,4 +1,4 @@
-from ctypes import resize
+from ctypes import addressof, resize
 import hashlib
 import time
 import rsa
@@ -195,16 +195,33 @@ class Block_chain:
             return True
         except Exception:
             print("RSA Verified wrong")
-
-        
+    
+    def start(self):
+        address,private=self.generate_address()
+        self.create_genese_block()
+        while(True):
+            transaction=block_chain.initialize_transaction('Harold','lin',100,10,'hey')
+            if transaction:
+                signature=block_chain.sign_transaction(transaction,private)
+                block_chain.add_transaction(transaction,signature)
+            self.mine_block(address)
+            print(self.get_balence(address))
+            self.adjust_difficulty()    
 
 if __name__=='__main__':
     block_chain=Block_chain()
-    adderss,private=block_chain.generate_address()
-    transaction=block_chain.initialize_transaction('Harold','lin',100,10,'hey')
-    if transaction:
-        signature=block_chain.sign_transaction(transaction,private)
-        block_chain.add_transaction(transaction,signature)
+    def start(self):
+        address,private=self.generate_address()
+        self.create_genese_block()
+        while(True):
+            transaction=block_chain.initialize_transaction('Harold','lin',100,10,'hey')
+            if transaction:
+                signature=block_chain.sign_transaction(transaction,private)
+                block_chain.add_transaction(transaction,signature)
+            self.mine_block(address)
+            print(self.get_balence(address))
+            self.adjust_difficulty()
+    start(block_chain)
 
 
 
