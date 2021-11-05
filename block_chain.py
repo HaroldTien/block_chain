@@ -32,7 +32,7 @@ class Block_chain:
         self.block_limitation=32
         self.chain=[]
         self.pending_transactions=[]
-
+    #let other function to call
     def transaction_to_string(self,transaction):
         transaction_dict={
             'snder':str(transaction.sender),
@@ -42,13 +42,13 @@ class Block_chain:
             'message':transaction.message
         }
         return str(transaction_dict)
-
+    #let other function to call
     def get_transactions_string(self,block):
         transaction_str=''
         for transaction in block.transactions:
             transaction_str+=self.transaction_to_string(transaction)
         return transaction_str
-
+    #let other function to call
     def get_hash(self,block,nonce):
         s=hashlib.sha1()
         s.update(
@@ -74,7 +74,7 @@ class Block_chain:
         self.pending_transactions.sort(key=lambda x: x.fee,reverse=True)
         if len(self.pending_transactions)>self.block_limitation:
             transction_accepted=self.pending_transactions[:self.block_limitation]
-            self.pending_transactions=self.pending_transactionsp[self.block_limitation:]
+            self.pending_transactions=self.pending_transactions[self.block_limitation:]
         else:
             transction_accepted=self.pending_transactions
             self.pending_transactions=[]
@@ -146,12 +146,15 @@ class Block_chain:
         print('Hash correct!')
         return True
 
+    #create public and private key with return that
+    #let other function to call
     def generate_address(self):
         public,private=rsa.newkeys(512)
         public_key=public.save_pkcs1()
         private_key=private.save_pkcs1()
         return self.get_address_from_public(public_key),private_key
 
+    #let other function to call
     def get_address_from_public(self,public):
         address=str(public).replace('\\n','')
         address=address.replace("b'-----BEGIN RSA PUBLIC KEY-----",'')
@@ -159,6 +162,8 @@ class Block_chain:
         address=address.replace(' ','')
         print('address:',address)
     
+    #check amount is enough and then return a transaction
+    #let other fuction to call()
     def initialize_transaction(self,sender,receiver,amount,fee,message):
         if self.get_balance(sender)<amount+fee:
             print('Balance not enough!')
@@ -166,13 +171,14 @@ class Block_chain:
         new_transaction=Transaction(sender,receiver,amount,fee,message)
         return new_transaction
 
+    
     def sign_transaction(self,transaction,private_key):
         private_key_pkcs=rsa.PublicKey.load_pkcs1(private_key)
         transaction_str=self.get_transactions_string(transaction)
         signature=rsa.sign(transaction_str.encode('utf-8'),private_key_pkcs,'SHA-1')
         return signature
 
-
+    #check amount in block is enough and append the block to pending block zone
     def add_transaction(self,transaction,signature):
         public_key='-----BEGIN RSA PUBLIC KEY-----\n'
         public_key+=transaction.sender
@@ -194,8 +200,12 @@ class Block_chain:
 
 if __name__=='__main__':
     block_chain=Block_chain()
+    adderss,private=block_chain.generate_address()
+    transaction=block_chain.initialize_transaction('Harold','lin',100,10,'hey')
+    if transaction:
+        signature=block_chain.sign_transaction(transaction,private)
+        block_chain.add_transaction(transaction,signature)
 
-    
 
 
     
