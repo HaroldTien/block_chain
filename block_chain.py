@@ -32,6 +32,7 @@ class Block_chain:
         self.block_limitation=32
         self.chain=[]
         self.pending_transactions=[]
+
     #let other function to call
     def transaction_to_string(self,transaction):
         transaction_dict={
@@ -210,18 +211,7 @@ class Block_chain:
 
 if __name__=='__main__':
     block_chain=Block_chain()
-    def start(self):
-        address,private=self.generate_address()
-        self.create_genese_block()
-        while(True):
-            transaction=block_chain.initialize_transaction('Harold','lin',100,10,'hey')
-            if transaction:
-                signature=block_chain.sign_transaction(transaction,private)
-                block_chain.add_transaction(transaction,signature)
-            self.mine_block(address)
-            print(self.get_balence(address))
-            self.adjust_difficulty()
-    start(block_chain)
+    block_chain.start()
 
 
 
