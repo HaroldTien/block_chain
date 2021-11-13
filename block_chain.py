@@ -1,7 +1,12 @@
-from ctypes import addressof, resize
+# from ctypes import addressof, resize
 import hashlib
+from os import EX_OSFILE
 import time
+from typing_extensions import Required
 import rsa
+import sys
+import threading
+import socket
 
 class Transaction:
     def __init__(self,sender,receiver,amounts,fee,message):
@@ -23,6 +28,7 @@ class Block:
         self.miner_rewards=miner_rewards
 
 
+
 class Block_chain:
     def __init__(self):
         self.adjust_difficulty_blocks=10
@@ -32,6 +38,65 @@ class Block_chain:
         self.block_limitation=32
         self.chain=[]
         self.pending_transactions=[]
+
+
+        self.socket_host='127.0.0.1'
+        self.socket_port=int(sys.argv[1])
+        self.start_socket_server()
+
+    def start_socket_server(self):
+        t=threading.Thread(target=self.wait_for_socket_connetion)
+        t.start()
+
+    def wait_for_socket_connetion(self):
+        with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s:
+            s.bind((self.socket_host,self.socket_port))
+            s.listen()
+            while True:
+                conn,address=s.accept()
+                
+                client_handler=threading.Thread(
+                    target=self.receive_socket_message,
+                    args=(conn,address)
+                )
+                client_handler.start()
+    def receive_socket_message(self,connection,address,):
+        with connection:
+            print('Connected by',address)
+            while True:
+                message=connection.recv(1024)
+                print('[*]Receive',message)
+                try:
+                    parsed_message=pickle.loads(message)
+                except Exception:
+                    print(message,'connot be parsed')
+                if message:
+                    if parsed_message['request']=='get_balance':
+                        print('start to get the balance for client...')
+                        address=parsed_message[address]
+                        balance=self.get_balance(address)
+                        response={
+                            'adderss':address,
+                            'balance':balance
+                        }        
+                elif parsed_message['request']=='transaction':
+                    print('Start to reanscation for client...')
+                    new_transaction=parsed_message['data']
+                    result,result_message=self.add_transaction(
+                        new_transaction,
+                        parsed_message['signature']
+                    )
+                    response={
+                        'result':result,
+                        'result_message':result_message
+                    }
+                else:
+                    response={
+                        'message':'Unknown command.'
+                    }
+                response_bytes=str(response).encode('utf=8')
+                connection.sendall(response_bytes)
+
 
     #let other function to call
     def transaction_to_string(self,transaction):
@@ -102,7 +167,7 @@ class Block_chain:
     def adjust_difficulty(self):
         if len(self.chain)%self.adjust_difficulty_blocks != 1:
             return self.difficulty
-        elif len(self.chain)<=self.adjust_difficulty_block:
+        elif len(self.chain)<=self.adjust_difficulty_blocks:
             return self.difficulty
         else:
             start=self.chain[-1* self.adjust_difficulty_blocks-1].timestamp
@@ -122,8 +187,8 @@ class Block_chain:
             miner=False
             if block.miner==account:
                 miner==True
-                balance+=transaction.miner_rewards
-            for transaction in block.transaction:
+                balance+block.miner_rewards
+            for transaction in block.transactions:
                 if miner:
                     balance+=transaction.fee
                 if transaction.sender==account:
@@ -206,8 +271,9 @@ class Block_chain:
                 signature=block_chain.sign_transaction(transaction,private)
                 block_chain.add_transaction(transaction,signature)
             self.mine_block(address)
-            print(self.get_balence(address))
+            print(self.get_balance(address))
             self.adjust_difficulty()    
+
 
 if __name__=='__main__':
     block_chain=Block_chain()
