@@ -1,6 +1,5 @@
 # from ctypes import addressof, resize
 import hashlib
-from os import EX_OSFILE
 import time
 from typing_extensions import Required
 import rsa
@@ -60,6 +59,7 @@ class Block_chain:
                     args=(conn,address)
                 )
                 client_handler.start()
+
     def receive_socket_message(self,connection,address,):
         with connection:
             print('Connected by',address)
@@ -264,6 +264,8 @@ class Block_chain:
     
     def start(self):
         address,private=self.generate_address()
+        print('Miner address: ',address)
+        print('Miner private: ',private)
         self.create_genese_block()
         while(True):
             transaction=block_chain.initialize_transaction('Harold','lin',100,10,'hey')
@@ -273,6 +275,12 @@ class Block_chain:
             self.mine_block(address)
             print(self.get_balance(address))
             self.adjust_difficulty()    
+            
+    def handle_receive():
+        while True:
+            response=client.recv(4096)
+            if response:
+                print('[*]Message from node: ',response)
 
 
 if __name__=='__main__':
