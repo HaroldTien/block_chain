@@ -1,7 +1,6 @@
 # from ctypes import addressof, resize
 import hashlib
 import time
-from typing_extensions import Required
 import rsa
 import sys
 import threading
@@ -27,7 +26,6 @@ class Block:
         self.miner_rewards=miner_rewards
 
 
-
 class Block_chain:
     def __init__(self):
         self.adjust_difficulty_blocks=10
@@ -44,30 +42,30 @@ class Block_chain:
         self.start_socket_server()
 
     def start_socket_server(self):
-        t=threading.Thread(target=self.wait_for_socket_connetion)
+        t=threading.Thread(target=self.wait_for_socket_connection)
         t.start()
 
-    def wait_for_socket_connetion(self):
+    def wait_for_socket_connection(self):
         with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s:
             s.bind((self.socket_host,self.socket_port))
             s.listen()
             while True:
                 conn,address=s.accept()
-                
+                print('connection from',address,'has been establish~!')       
                 client_handler=threading.Thread(
                     target=self.receive_socket_message,
                     args=(conn,address)
                 )
                 client_handler.start()
-
-    def receive_socket_message(self,connection,address,):
+        
+    def receive_socket_message(self,connection,address):
         with connection:
-            print('Connected by',address)
             while True:
                 message=connection.recv(1024)
                 print('[*]Receive',message)
                 try:
-                    parsed_message=pickle.loads(message)
+                    #trouble code
+                    parsed_message=pickle.loads(message)#??what is pickle
                 except Exception:
                     print(message,'connot be parsed')
                 if message:
@@ -276,16 +274,24 @@ class Block_chain:
             print(self.get_balance(address))
             self.adjust_difficulty()    
             
-    def handle_receive():
+    def handle_receive(client):
         while True:
             response=client.recv(4096)
+
             if response:
                 print('[*]Message from node: ',response)
+            
 
 
 if __name__=='__main__':
-    block_chain=Block_chain()
-    block_chain.start()
+    block_chain=Block_chain()  
+    target_hast='127.0.0.1'
+    target_port=int(bytes(sys.argv[1].encode('utf-8')))
+    client=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    client.connect((target_hast,target_port))
+    
+    receive_handler=threading.Thread(target=block_chain.handle_receive,args=())
+    receive_handler.start()
 
 
 
